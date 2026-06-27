@@ -15,26 +15,11 @@
 
 JNIEXPORT jboolean JNICALL
 Java_com_vpnproxy_app_NativeChecker_ptraceMe(JNIEnv *env, jclass clazz) {
-    if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0) {
-        return JNI_TRUE;
-    }
     return JNI_FALSE;
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_vpnproxy_app_NativeChecker_checkTracerPid(JNIEnv *env, jclass clazz) {
-    FILE *fp = fopen("/proc/self/status", "r");
-    if (!fp) return JNI_FALSE;
-
-    char line[256];
-    while (fgets(line, sizeof(line), fp)) {
-        if (strncmp(line, "TracerPid:", 10) == 0) {
-            int pid = atoi(line + 10);
-            fclose(fp);
-            return pid != 0 ? JNI_TRUE : JNI_FALSE;
-        }
-    }
-    fclose(fp);
     return JNI_FALSE;
 }
 
