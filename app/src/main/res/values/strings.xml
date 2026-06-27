@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">安全服务</string>
+    <string name="connect">连接</string>
+    <string name="disconnect">断开</string>
+    <string name="status_connected">已连接</string>
+    <string name="status_disconnected">未连接</string>
+    <string name="debug_warning">检测到调试环境，已退出</string>
+    <string name="emulator_warning">模拟器环境不支持</string>
+    <string name="capture_warning">检测到抓包工具，已退出</string>
+</resources>

@@ -1,0 +1,3 @@
+-keepattributes *Annotation*
+-keepattributes SourceFile,LineNumberTable
+-keep class com.vpnproxy.app.** { *; }
