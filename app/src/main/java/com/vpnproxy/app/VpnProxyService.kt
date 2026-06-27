@@ -6,10 +6,14 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.VpnService
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
@@ -27,6 +31,7 @@ class VpnProxyService : VpnService() {
 
     private var bytesSent = 0L
     private var bytesReceived = 0L
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onCreate() {
         super.onCreate()
@@ -93,6 +98,22 @@ class VpnProxyService : VpnService() {
             name = "VpnReader"
             start()
         }
+
+        testProxyConnection()
+    }
+
+    private fun testProxyConnection() {
+        Thread {
+            try {
+                val testSocket = Socket()
+                protect(testSocket)
+                testSocket.connect(InetSocketAddress(serverAddress, serverPort), 5000)
+                testSocket.close()
+                mainHandler.post { connectionCallback?.invoke(true) }
+            } catch (e: Exception) {
+                mainHandler.post { connectionCallback?.invoke(false) }
+            }
+        }.apply { name = "ProxyTester" }.start()
     }
 
     private fun processPacket(packet: ByteArray, output: FileOutputStream) {
@@ -361,6 +382,8 @@ class VpnProxyService : VpnService() {
     }
 
     companion object {
+        var connectionCallback: ((Boolean) -> Unit)? = null
+
         const val EXTRA_SERVER_ADDR = "server_addr"
         const val EXTRA_SERVER_PORT = "server_port"
         const val EXTRA_USERNAME = "username"

@@ -261,6 +261,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onVpnPrepared() {
+        VpnProxyService.connectionCallback = { success ->
+            runOnUiThread {
+                if (success) {
+                    isConnecting = false
+                    isConnected = true
+                    animateButtonToConnected()
+                    animateStatusToConnected()
+                    connectionProgress.animate()
+                        .alpha(0f)
+                        .setDuration(400)
+                        .withLayer()
+                        .start()
+                } else {
+                    isConnecting = false
+                    isConnected = false
+                    animateButtonToDisconnected()
+                    animateStatusToDisconnected()
+                    connectionProgress.animate()
+                        .alpha(0f)
+                        .setDuration(200)
+                        .withLayer()
+                        .start()
+                    Toast.makeText(this, "代理服务器连接失败，请检查地址是否可用", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
         val intent = Intent(this, VpnProxyService::class.java).apply {
             putExtra(VpnProxyService.EXTRA_SERVER_ADDR, serverAddress)
             putExtra(VpnProxyService.EXTRA_SERVER_PORT, serverPort)
@@ -268,20 +295,6 @@ class MainActivity : AppCompatActivity() {
             putExtra(VpnProxyService.EXTRA_PASSWORD, "")
         }
         ContextCompat.startForegroundService(this, intent)
-
-        statusIndicator.postDelayed({
-            if (isConnecting) {
-                isConnecting = false
-                isConnected = true
-                animateButtonToConnected()
-                animateStatusToConnected()
-                connectionProgress.animate()
-                    .alpha(0f)
-                    .setDuration(400)
-                    .withLayer()
-                    .start()
-            }
-        }, 1800)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -301,6 +314,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun disconnectVpn() {
+        VpnProxyService.connectionCallback = null
+
         isConnecting = true
         animateStatusToConnecting()
 
@@ -309,6 +324,8 @@ class MainActivity : AppCompatActivity() {
             .setDuration(300)
             .withLayer()
             .start()
+
+        stopService(Intent(this, VpnProxyService::class.java))
 
         statusIndicator.postDelayed({
             isConnecting = false
@@ -656,6 +673,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        VpnProxyService.connectionCallback = null
         trafficRunning = false
         if (::pulseAnimator.isInitialized) pulseAnimator.cancel()
         if (::glowRotateAnimator.isInitialized) glowRotateAnimator.cancel()
