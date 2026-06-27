@@ -67,7 +67,7 @@
             android:paddingHorizontal="16dp">
 
             <TextView
-                android:id="@+id/serverItemName"
+                android:id="@+id/serverItemName1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -75,12 +75,12 @@
                 android:textColor="#ECEFF1"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/pingBadge"
+                app:layout_constraintEnd_toStartOf="@id/pingBadge1"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/pingBadge"
+                android:id="@+id/pingBadge1"
                 android:layout_width="wrap_content"
                 android:layout_height="28dp"
                 android:gravity="center"
@@ -122,7 +122,7 @@
             android:paddingHorizontal="16dp">
 
             <TextView
-                android:id="@+id/serverItemName"
+                android:id="@+id/serverItemName2"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -130,12 +130,12 @@
                 android:textColor="#ECEFF1"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/pingBadge"
+                app:layout_constraintEnd_toStartOf="@id/pingBadge2"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/pingBadge"
+                android:id="@+id/pingBadge2"
                 android:layout_width="wrap_content"
                 android:layout_height="28dp"
                 android:gravity="center"
@@ -177,7 +177,7 @@
             android:paddingHorizontal="16dp">
 
             <TextView
-                android:id="@+id/serverItemName"
+                android:id="@+id/serverItemName3"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -185,12 +185,12 @@
                 android:textColor="#ECEFF1"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/pingBadge"
+                app:layout_constraintEnd_toStartOf="@id/pingBadge3"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/pingBadge"
+                android:id="@+id/pingBadge3"
                 android:layout_width="wrap_content"
                 android:layout_height="28dp"
                 android:gravity="center"
@@ -232,7 +232,7 @@
             android:paddingHorizontal="16dp">
 
             <TextView
-                android:id="@+id/serverItemName"
+                android:id="@+id/serverItemName4"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -240,12 +240,12 @@
                 android:textColor="#ECEFF1"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/pingBadge"
+                app:layout_constraintEnd_toStartOf="@id/pingBadge4"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/pingBadge"
+                android:id="@+id/pingBadge4"
                 android:layout_width="wrap_content"
                 android:layout_height="28dp"
                 android:gravity="center"
@@ -287,7 +287,7 @@
             android:paddingHorizontal="16dp">
 
             <TextView
-                android:id="@+id/serverItemName"
+                android:id="@+id/serverItemName5"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
@@ -295,12 +295,12 @@
                 android:textColor="#ECEFF1"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/pingBadge"
+                app:layout_constraintEnd_toStartOf="@id/pingBadge5"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/pingBadge"
+                android:id="@+id/pingBadge5"
                 android:layout_width="wrap_content"
                 android:layout_height="28dp"
                 android:gravity="center"

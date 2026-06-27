@@ -60,22 +60,23 @@ class ServerBottomSheet(
     }
 
     private fun setupServers(view: View) {
+        data class ServerInfo(val cardId: Int, val nameId: Int, val name: String, val host: String)
         val servers = listOf(
-            Triple(R.id.serverItem1, "🇯🇵 日本 - Tokyo #1", "jp-tokyo-01.vpnservice.com"),
-            Triple(R.id.serverItem2, "🇺🇸 美国 - Los Angeles #2", "us-la-02.vpnservice.com"),
-            Triple(R.id.serverItem3, "🇭🇰 香港 - Hong Kong #3", "hk-hkg-03.vpnservice.com"),
-            Triple(R.id.serverItem4, "🇸🇬 新加坡 - Singapore #4", "sg-sin-04.vpnservice.com"),
-            Triple(R.id.serverItem5, "🇰🇷 韩国 - Seoul #5", "kr-sel-05.vpnservice.com")
+            ServerInfo(R.id.serverItem1, R.id.serverItemName1, "🇯🇵 日本 - Tokyo #1", "jp-tokyo-01.vpnservice.com"),
+            ServerInfo(R.id.serverItem2, R.id.serverItemName2, "🇺🇸 美国 - Los Angeles #2", "us-la-02.vpnservice.com"),
+            ServerInfo(R.id.serverItem3, R.id.serverItemName3, "🇭🇰 香港 - Hong Kong #3", "hk-hkg-03.vpnservice.com"),
+            ServerInfo(R.id.serverItem4, R.id.serverItemName4, "🇸🇬 新加坡 - Singapore #4", "sg-sin-04.vpnservice.com"),
+            ServerInfo(R.id.serverItem5, R.id.serverItemName5, "🇰🇷 韩国 - Seoul #5", "kr-sel-05.vpnservice.com")
         )
 
-        for ((id, name, host) in servers) {
-            val card = view.findViewById<MaterialCardView>(id) ?: continue
-            val nameView = card.findViewById<TextView>(R.id.serverItemName)
-            nameView.text = name
+        for (s in servers) {
+            val card = view.findViewById<MaterialCardView>(s.cardId) ?: continue
+            val nameView = card.findViewById<TextView>(s.nameId)
+            nameView.text = s.name
             card.setOnClickListener {
                 animateSelection(card)
                 card.postDelayed({
-                    onServerSelected(name, host)
+                    onServerSelected(s.name, s.host)
                     dismiss()
                 }, 350)
             }
