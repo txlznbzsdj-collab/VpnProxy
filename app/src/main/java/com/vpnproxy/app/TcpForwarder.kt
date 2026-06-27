@@ -41,7 +41,7 @@ class TcpForwarder(
 
             synchronized(handshakeLock) {
                 while (!handshakeDone && running.get()) {
-                    handshakeLock.wait(5000)
+                    (handshakeLock as java.lang.Object).wait(5000)
                 }
             }
             if (!handshakeDone) {
@@ -80,7 +80,7 @@ class TcpForwarder(
                             outputStream?.flush()
                         }
                         handshakeDone = true
-                        handshakeLock.notify()
+                        (handshakeLock as java.lang.Object).notify()
                         return
                     }
                 }

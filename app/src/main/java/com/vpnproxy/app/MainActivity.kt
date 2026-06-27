@@ -634,7 +634,7 @@ class MainActivity : ComponentActivity() {
     // ─── SPRING ANIMATIONS (Physics-based) ───────────────────────
 
     private fun springScale(view: View) {
-        val spring = SpringAnimation(view, DynamicAnimation.SCALE_X).apply {
+        val springAnim = SpringAnimation(view, DynamicAnimation.SCALE_X).apply {
             spring = SpringForce().apply {
                 stiffness = SpringForce.STIFFNESS_MEDIUM
                 dampingRatio = SpringForce.DAMPING_RATIO_LOW_BOUNCY
@@ -642,7 +642,7 @@ class MainActivity : ComponentActivity() {
         }
         view.scaleX = 0.92f
         view.scaleY = 0.92f
-        spring.animateToFinalPosition(1f)
+        springAnim.animateToFinalPosition(1f)
         SpringAnimation(view, DynamicAnimation.SCALE_Y).apply {
             spring = SpringForce().apply {
                 stiffness = SpringForce.STIFFNESS_MEDIUM

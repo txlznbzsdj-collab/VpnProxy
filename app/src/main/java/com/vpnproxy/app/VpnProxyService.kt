@@ -57,7 +57,7 @@ class VpnProxyService : VpnService() {
         running = true
 
         val builder = Builder()
-        builder.setName("VPN Proxy")
+        builder.setSession("VPN Proxy")
         builder.setMtu(1500)
         builder.addAddress(VPN_IP, 24)
         builder.addRoute("0.0.0.0", 0)
