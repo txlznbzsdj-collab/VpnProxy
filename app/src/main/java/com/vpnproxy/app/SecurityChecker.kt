@@ -17,16 +17,7 @@ object SecurityChecker {
         return false
     }
 
-    fun isEmulator(): Boolean {
-        return Build.FINGERPRINT.contains("generic") ||
-               Build.FINGERPRINT.contains("vbox") ||
-               Build.MODEL.contains("google_sdk") ||
-               Build.MODEL.contains("Emulator") ||
-               Build.MODEL.contains("Android SDK") ||
-               Build.MANUFACTURER.contains("Genymotion") ||
-               (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")) ||
-               "google_sdk".equals(Build.PRODUCT)
-    }
+    fun isEmulator(): Boolean = false
 
     fun isFridaDetected(): Boolean {
         if (!NativeChecker.isLoaded()) return false
