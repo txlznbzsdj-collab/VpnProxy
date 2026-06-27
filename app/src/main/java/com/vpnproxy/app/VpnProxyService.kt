@@ -131,7 +131,7 @@ class VpnProxyService : VpnService() {
         val session = TcpSession(
             key = key,
             clientSeq = header.seqNum + 1,
-            ackNum = 0L
+            clientAck = 0L
         )
 
         try {
