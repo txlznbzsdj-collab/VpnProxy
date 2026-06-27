@@ -28,8 +28,8 @@ jobs:
           echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.2.9519653" --sdk_root=$ANDROID_HOME > /dev/null 2>&1
           echo "NDK installed"
 
-      - name: Generate gradle wrapper
-        run: gradle wrapper --gradle-version 8.5
+      - name: Make gradlew executable
+        run: chmod +x gradlew
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
