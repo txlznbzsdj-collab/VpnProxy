@@ -46,7 +46,6 @@ class HttpProxyServer:
             client.settimeout(60)
             request_line = self._read_line(client)
             if not request_line:
-                log.info(f"[{client_ip}] 连接建立但未发送数据，已关闭")
                 return
 
             parts = request_line.split(" ")
@@ -188,7 +187,7 @@ class HttpProxyServer:
 
 def main():
     parser = argparse.ArgumentParser(description="HTTP Proxy Server")
-    parser.add_argument("--port", type=int, default=12325, help="Bind port (default: 12325)")
+    parser.add_argument("--port", type=int, default=1080, help="Bind port (default: 1080)")
     parser.add_argument("--host", default="0.0.0.0", help="Bind address (default: 0.0.0.0)")
     args = parser.parse_args()
 
