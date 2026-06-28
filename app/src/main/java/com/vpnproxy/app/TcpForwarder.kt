@@ -1,5 +1,6 @@
 package com.vpnproxy.app
 
+import android.util.Log
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetAddress
@@ -32,12 +33,14 @@ class TcpForwarder(
         try {
             httpDirectMode = dstPort == 80 || dstPort == 8080 || dstPort == 8000
 
+            Log.d(TAG, "连接代理服务器: $serverAddress:$serverPort -> 目标:${InetAddress.getByAddress(dstAddress).hostAddress}:$dstPort")
             socket = Socket()
             socketProtector?.invoke(socket!!)
             socket!!.connect(InetSocketAddress(serverAddress, serverPort), 10000)
             socket!!.soTimeout = 0
             outputStream = socket!!.getOutputStream()
             inputStream = socket!!.getInputStream()
+            Log.d(TAG, "代理连接成功, 等待握手完成")
 
             synchronized(handshakeLock) {
                 while (!handshakeDone && running.get()) {
@@ -47,6 +50,7 @@ class TcpForwarder(
             if (!handshakeDone) {
                 throw Exception("Handshake timeout")
             }
+            Log.d(TAG, "握手完成, 开始数据转发")
 
             val buffer = ByteArray(65536)
             while (running.get() && !isInterrupted) {
@@ -54,8 +58,14 @@ class TcpForwarder(
                 if (len <= 0) break
                 onDataReceived(buffer.copyOf(len))
             }
+        } catch (e: java.net.ConnectException) {
+            Log.e(TAG, "代理连接被拒绝: $serverAddress:$serverPort", e)
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "代理连接超时: $serverAddress:$serverPort", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "代理连接IO异常: $serverAddress:$serverPort", e)
         } catch (e: Exception) {
-            if (running.get()) e.printStackTrace()
+            if (running.get()) Log.e(TAG, "代理转发异常", e)
         } finally {
             running.set(false)
             close()
@@ -69,12 +79,14 @@ class TcpForwarder(
                 synchronized(handshakeLock) {
                     if (!handshakeDone) {
                         if (httpDirectMode) {
+                            Log.d(TAG, "HTTP直连模式, 重写请求")
                             val rewritten = rewriteHttpRequest(data)
                             outputStream?.write(rewritten)
                             outputStream?.flush()
                         } else {
                             val sni = extractSni(data)
                             val host = sni ?: InetAddress.getByAddress(dstAddress).hostAddress
+                            Log.d(TAG, "发送CONNECT握手: $host:$dstPort")
                             doConnectHandshake(host)
                             outputStream?.write(data)
                             outputStream?.flush()
@@ -88,6 +100,7 @@ class TcpForwarder(
             outputStream?.write(data)
             outputStream?.flush()
         } catch (e: Exception) {
+            Log.e(TAG, "sendData异常", e)
             close()
         }
     }
@@ -98,9 +111,16 @@ class TcpForwarder(
         val connectReq = "CONNECT $host:$dstPort HTTP/1.1\r\nHost: $host:$dstPort\r\n\r\n"
         os.write(connectReq.toByteArray())
         os.flush()
-        val responseLine = readLine(ins) ?: throw Exception("HTTP proxy no response")
+        val responseLine = readLine(ins) ?: throw Exception("HTTP代理无响应")
         if (!responseLine.contains("200")) {
-            throw Exception("HTTP proxy connect failed: $responseLine")
+            val sb = StringBuilder("HTTP CONNECT失败: $responseLine")
+            while (true) {
+                val line = readLine(ins) ?: break
+                if (line.isEmpty()) break
+                sb.append(" | ").append(line)
+            }
+            Log.w(TAG, sb.toString())
+            throw Exception("HTTP代理拒绝连接: $responseLine")
         }
         while (true) {
             val line = readLine(ins) ?: break
@@ -208,6 +228,7 @@ class TcpForwarder(
     val isRunning: Boolean get() = running.get()
 
     companion object {
+        const val TAG = "TcpForwarder"
         private fun readLine(ins: InputStream): String? {
             val buf = StringBuilder()
             var prev = 0

@@ -7,6 +7,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.VpnService
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.BounceInterpolator
@@ -15,7 +16,6 @@ import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AlertDialog
@@ -232,6 +232,7 @@ class MainActivity : AppCompatActivity() {
     private var mockConnectionCount = 0
 
     private fun connectVpn() {
+        Log.d(TAG, "发起VPN连接: $serverAddress:$serverPort")
         isConnecting = true
         animateButtonToConnecting()
         animateStatusToConnecting()
@@ -261,9 +262,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onVpnPrepared() {
-        VpnProxyService.connectionCallback = { success ->
+        VpnProxyService.connectionCallback = { success, errorMsg ->
             runOnUiThread {
                 if (success) {
+                    Log.d(TAG, "连接成功")
                     isConnecting = false
                     isConnected = true
                     animateButtonToConnected()
@@ -274,6 +276,7 @@ class MainActivity : AppCompatActivity() {
                         .withLayer()
                         .start()
                 } else {
+                    Log.e(TAG, "连接失败: ${errorMsg ?: "未知错误"}")
                     isConnecting = false
                     isConnected = false
                     animateButtonToDisconnected()
@@ -283,7 +286,13 @@ class MainActivity : AppCompatActivity() {
                         .setDuration(200)
                         .withLayer()
                         .start()
-                    Toast.makeText(this, "代理服务器连接失败，请检查地址是否可用", Toast.LENGTH_LONG).show()
+
+                    val displayMsg = errorMsg ?: "代理服务器连接失败，请检查地址是否可用"
+                    AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                        .setTitle("连接失败")
+                        .setMessage("$displayMsg\n\n服务器: $serverAddress:$serverPort")
+                        .setPositiveButton("确定") { _, _ -> }
+                        .show()
                 }
             }
         }
@@ -299,9 +308,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == VPN_REQUEST_CODE) {
+            Log.d(TAG, "VPN授权结果: resultCode=$resultCode")
+        }
         if (requestCode == VPN_REQUEST_CODE && resultCode == RESULT_OK) {
             onVpnPrepared()
         } else if (requestCode == VPN_REQUEST_CODE) {
+            Log.w(TAG, "VPN授权被拒绝")
             isConnecting = false
             animateButtonToDisconnected()
             animateStatusToDisconnected()
@@ -314,6 +327,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun disconnectVpn() {
+        Log.d(TAG, "断开VPN连接")
         VpnProxyService.connectionCallback = null
 
         isConnecting = true
@@ -681,6 +695,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val TAG = "MainActivity"
         private const val VPN_REQUEST_CODE = 1000
     }
 }

@@ -9,6 +9,7 @@ import android.net.VpnService
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
+import android.util.Log
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.InetAddress
@@ -50,15 +51,18 @@ class VpnProxyService : VpnService() {
     }
 
     override fun onRevoke() {
+        Log.w(TAG, "VPN被系统撤销")
         stopVpn()
     }
 
     override fun onDestroy() {
+        Log.d(TAG, "服务销毁")
         stopVpn()
         super.onDestroy()
     }
 
     private fun startVpn() {
+        Log.d(TAG, "启动VPN: server=$serverAddress:$serverPort")
         running = true
 
         val builder = Builder()
@@ -71,10 +75,13 @@ class VpnProxyService : VpnService() {
 
         vpnInterface = builder.establish()
         if (vpnInterface == null) {
+            Log.e(TAG, "TUN接口建立失败")
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
+            mainHandler.post { connectionCallback?.invoke(false, "VPN接口建立失败，请检查VPN权限") }
             return
         }
+        Log.d(TAG, "TUN接口建立成功")
 
         vpnThread = Thread {
             try {
@@ -90,7 +97,7 @@ class VpnProxyService : VpnService() {
                     processPacket(packet, output)
                 }
             } catch (e: Exception) {
-                if (running) e.printStackTrace()
+                if (running) Log.e(TAG, "VPN读取循环异常", e)
             } finally {
                 cleanupAll()
             }
@@ -105,6 +112,7 @@ class VpnProxyService : VpnService() {
     private fun testProxyConnection() {
         Thread {
             try {
+                Log.d(TAG, "测试代理连接: $serverAddress:$serverPort")
                 val testSocket = Socket()
                 protect(testSocket)
                 testSocket.connect(InetSocketAddress(serverAddress, serverPort), 5000)
@@ -118,10 +126,30 @@ class VpnProxyService : VpnService() {
                 val respStr = String(response, 0, len)
                 val ok = respStr.contains("200")
 
+                if (ok) {
+                    Log.d(TAG, "代理连接测试成功")
+                } else {
+                    Log.w(TAG, "代理响应异常: $respStr")
+                }
+
                 testSocket.close()
-                mainHandler.post { connectionCallback?.invoke(ok) }
+                val errorMsg = if (ok) null else "代理服务器返回异常响应: ${respStr.take(100)}"
+                mainHandler.post { connectionCallback?.invoke(ok, errorMsg) }
+            } catch (e: java.net.UnknownHostException) {
+                Log.e(TAG, "DNS解析失败: $serverAddress", e)
+                mainHandler.post { connectionCallback?.invoke(false, "DNS解析失败，无法解析服务器地址: $serverAddress") }
+            } catch (e: java.net.ConnectException) {
+                Log.e(TAG, "连接被拒绝: $serverAddress:$serverPort", e)
+                mainHandler.post { connectionCallback?.invoke(false, "连接被拒绝，服务器 $serverAddress:$serverPort 不可达") }
+            } catch (e: java.net.SocketTimeoutException) {
+                Log.e(TAG, "连接超时: $serverAddress:$serverPort", e)
+                mainHandler.post { connectionCallback?.invoke(false, "连接超时，服务器 $serverAddress:$serverPort 未响应") }
+            } catch (e: java.io.IOException) {
+                Log.e(TAG, "代理连接IO异常", e)
+                mainHandler.post { connectionCallback?.invoke(false, "网络IO错误: ${e.localizedMessage ?: "未知错误"}") }
             } catch (e: Exception) {
-                mainHandler.post { connectionCallback?.invoke(false) }
+                Log.e(TAG, "代理连接未知异常", e)
+                mainHandler.post { connectionCallback?.invoke(false, "未知错误: ${e.localizedMessage ?: "请检查网络连接"}") }
             }
         }.apply { name = "ProxyTester" }.start()
     }
@@ -194,7 +222,7 @@ class VpnProxyService : VpnService() {
             session.serverSeq = (session.serverSeq + 1) and 0xFFFFFFFFL
             session.state = TcpSession.State.SYN_RECEIVED
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "handleSyn异常 key=$key", e)
             sessions.remove(key)
             val rst = PacketBuilder.buildTcpRst(
                 srcIp = header.dstIp,
@@ -293,7 +321,7 @@ class VpnProxyService : VpnService() {
             writePacket(output, pkt)
             bytesReceived += data.size
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "onProxyData异常 key=$key", e)
         }
     }
 
@@ -320,6 +348,7 @@ class VpnProxyService : VpnService() {
     }
 
     private fun cleanupAll() {
+        Log.d(TAG, "清理所有会话: ${sessions.size} 个活跃连接")
         running = false
         for ((_, session) in sessions) {
             session.close()
@@ -334,6 +363,7 @@ class VpnProxyService : VpnService() {
     }
 
     private fun stopVpn() {
+        Log.d(TAG, "停止VPN服务")
         running = false
         vpnThread?.interrupt()
         vpnThread = null
@@ -392,8 +422,9 @@ class VpnProxyService : VpnService() {
     }
 
     companion object {
-        var connectionCallback: ((Boolean) -> Unit)? = null
+        var connectionCallback: ((Boolean, String?) -> Unit)? = null
 
+        const val TAG = "VpnProxyService"
         const val EXTRA_SERVER_ADDR = "server_addr"
         const val EXTRA_SERVER_PORT = "server_port"
         const val EXTRA_USERNAME = "username"
