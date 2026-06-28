@@ -42,10 +42,14 @@ object PacketParser {
         val dstIp = InetAddress.getByAddress(packet.sliceArray(16..19))
 
         if (protocol != 6) {
-            val (srcPort, dstPort) = if (protocol == 17 && packet.size >= ihl + 4) {
-                ((packet[ihl].toInt() and 0xFF) shl 8) or (packet[ihl + 1].toInt() and 0xFF) to
-                ((packet[ihl + 2].toInt() and 0xFF) shl 8) or (packet[ihl + 3].toInt() and 0xFF)
-            } else 0 to 0
+            val srcPort: Int
+            val dstPort: Int
+            if (protocol == 17 && packet.size >= ihl + 4) {
+                srcPort = ((packet[ihl].toInt() and 0xFF) shl 8) or (packet[ihl + 1].toInt() and 0xFF)
+                dstPort = ((packet[ihl + 2].toInt() and 0xFF) shl 8) or (packet[ihl + 3].toInt() and 0xFF)
+            } else {
+                srcPort = 0; dstPort = 0
+            }
             return PacketHeader(
                 srcIp = srcIp, dstIp = dstIp, protocol = protocol,
                 srcPort = srcPort, dstPort = dstPort,
