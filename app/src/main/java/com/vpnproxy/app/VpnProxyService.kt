@@ -154,8 +154,102 @@ class VpnProxyService : VpnService() {
         }.apply { name = "ProxyTester" }.start()
     }
 
+    private fun handleDnsQuery(packet: ByteArray, header: PacketHeader, output: FileOutputStream) {
+        Thread {
+            try {
+                val ihl = header.headerLength
+                val udpOffset = ihl
+                if (packet.size < udpOffset + 8) return@Thread
+
+                val srcPort = ((packet[udpOffset].toInt() and 0xFF) shl 8) or (packet[udpOffset + 1].toInt() and 0xFF)
+                val dstPort = ((packet[udpOffset + 2].toInt() and 0xFF) shl 8) or (packet[udpOffset + 3].toInt() and 0xFF)
+                val dnsData = packet.sliceArray(udpOffset + 8 until header.totalLength)
+
+                Log.d(TAG, "DNS查询 ${header.srcIp.hostAddress}:$srcPort -> $dstPort ${dnsData.size}bytes")
+
+                val dnsSocket = Socket()
+                protect(dnsSocket)
+                dnsSocket.connect(InetSocketAddress("8.8.8.8", 53), 5000)
+                dnsSocket.soTimeout = 5000
+
+                val dnsOut = dnsSocket.getOutputStream()
+                val dnsIn = dnsSocket.getInputStream()
+
+                val lenPrefix = byteArrayOf(((dnsData.size shr 8) and 0xFF).toByte(), (dnsData.size and 0xFF).toByte())
+                dnsOut.write(lenPrefix)
+                dnsOut.write(dnsData)
+                dnsOut.flush()
+
+                val lenHi = dnsIn.read()
+                val lenLo = dnsIn.read()
+                if (lenHi < 0 || lenLo < 0) { dnsSocket.close(); return@Thread }
+                val respLen = (lenHi shl 8) or lenLo
+                val respData = ByteArray(respLen)
+                var off = 0
+                while (off < respLen) {
+                    val r = dnsIn.read(respData, off, respLen - off)
+                    if (r < 0) break
+                    off += r
+                }
+                dnsSocket.close()
+                if (off < respLen) return@Thread
+
+                val udpRespLen = 8 + respData.size
+                val totalLen = ihl + udpRespLen
+                val buf = java.nio.ByteBuffer.allocate(totalLen)
+
+                buf.put(0x45.toByte())
+                buf.put(0x00.toByte())
+                buf.putShort(totalLen.toShort())
+                buf.putInt(0)
+                buf.put(0x40.toByte())
+                buf.put(17.toByte())
+                buf.putShort(0)
+                buf.put(header.dstIp.address)
+                buf.put(header.srcIp.address)
+
+                val ipChecksum = ipChecksum(buf.array(), 0, 20)
+                buf.putShort(10, ipChecksum)
+
+                buf.putShort(dstPort.toShort())
+                buf.putShort(srcPort.toShort())
+                buf.putShort(udpRespLen.toShort())
+                buf.putShort(0)
+                buf.put(respData)
+
+                writePacket(output, buf.array())
+                Log.d(TAG, "DNS响应 ${header.dstIp.hostAddress}:$dstPort -> ${header.srcIp.hostAddress}:$srcPort ${respData.size}bytes")
+            } catch (e: java.net.SocketTimeoutException) {
+                Log.w(TAG, "DNS转发超时", e)
+            } catch (e: Exception) {
+                Log.e(TAG, "DNS转发异常", e)
+            }
+        }.apply { name = "DnsForwarder" }.start()
+    }
+
+    private fun ipChecksum(data: ByteArray, offset: Int, length: Int): Short {
+        var sum = 0
+        var i = offset
+        while (i < offset + length - 1) {
+            sum += ((data[i].toInt() and 0xFF) shl 8) or (data[i + 1].toInt() and 0xFF)
+            i += 2
+        }
+        if (i < offset + length) {
+            sum += (data[i].toInt() and 0xFF) shl 8
+        }
+        while (sum > 0xFFFF) {
+            sum = (sum and 0xFFFF) + (sum shr 16)
+        }
+        return ((sum.inv() and 0xFFFF).toShort())
+    }
+
     private fun processPacket(packet: ByteArray, output: FileOutputStream) {
         val header = PacketParser.parseIPv4(packet) ?: return
+
+        if (header.protocol == 17 && header.dstPort == 53) {
+            handleDnsQuery(packet, header, output)
+            return
+        }
 
         if (header.protocol != 6) return
 
