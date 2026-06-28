@@ -108,8 +108,18 @@ class VpnProxyService : VpnService() {
                 val testSocket = Socket()
                 protect(testSocket)
                 testSocket.connect(InetSocketAddress(serverAddress, serverPort), 5000)
+                testSocket.soTimeout = 5000
+
+                val connMsg = "CONNECT 8.8.8.8:53 HTTP/1.1\r\nHost: 8.8.8.8:53\r\n\r\n"
+                testSocket.getOutputStream().write(connMsg.toByteArray())
+
+                val response = ByteArray(200)
+                val len = testSocket.getInputStream().read(response)
+                val respStr = String(response, 0, len)
+                val ok = respStr.contains("200")
+
                 testSocket.close()
-                mainHandler.post { connectionCallback?.invoke(true) }
+                mainHandler.post { connectionCallback?.invoke(ok) }
             } catch (e: Exception) {
                 mainHandler.post { connectionCallback?.invoke(false) }
             }

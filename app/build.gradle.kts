@@ -16,7 +16,7 @@ android {
         versionName = "1.0"
 
         buildConfigField("String", "PROXY_SERVER", "\"61.184.5.152\"")
-        buildConfigField("int", "PROXY_PORT", "1080")
+        buildConfigField("int", "PROXY_PORT", "12325")
 
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
@@ -26,7 +26,7 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "PROXY_SERVER", "\"61.184.5.152\"")
-            buildConfigField("int", "PROXY_PORT", "1080")
+            buildConfigField("int", "PROXY_PORT", "12325")
         }
         release {
             isMinifyEnabled = true
@@ -35,7 +35,7 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("String", "PROXY_SERVER", "\"61.184.5.152\"")
-            buildConfigField("int", "PROXY_PORT", "1080")
+            buildConfigField("int", "PROXY_PORT", "12325")
         }
     }
 
