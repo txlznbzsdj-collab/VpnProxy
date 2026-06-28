@@ -188,7 +188,7 @@ class HttpProxyServer:
 
 def main():
     parser = argparse.ArgumentParser(description="HTTP Proxy Server")
-    parser.add_argument("--port", type=int, default=12325, help="Bind port (default: 12325)")
+    parser.add_argument("--port", type=int, default=1080, help="Bind port (default: 1080)")
     parser.add_argument("--host", default="0.0.0.0", help="Bind address (default: 0.0.0.0)")
     args = parser.parse_args()
 
