@@ -161,8 +161,8 @@ class VpnProxyService : VpnService() {
                 val udpOffset = ihl
                 if (packet.size < udpOffset + 8) return@Thread
 
-                val srcPort = ((packet[udpOffset].toInt() and 0xFF) shl 8) or (packet[udpOffset + 1].toInt() and 0xFF)
-                val dstPort = ((packet[udpOffset + 2].toInt() and 0xFF) shl 8) or (packet[udpOffset + 3].toInt() and 0xFF)
+                val srcPort = header.srcPort
+                val dstPort = header.dstPort
                 val dnsData = packet.sliceArray(udpOffset + 8 until header.totalLength)
 
                 Log.d(TAG, "DNS查询 ${header.srcIp.hostAddress}:$srcPort -> $dstPort ${dnsData.size}bytes")
